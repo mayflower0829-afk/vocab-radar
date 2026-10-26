@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#4F6EF2">
+  <meta name="description" content="WordRadar 考研词汇雷达：基于艾宾浩斯记忆调度与 COCA 词频排序的考研词汇学习工具。数据开源（ECDICT），进度仅存本机。">
+  <title>WordRadar · 考研词汇雷达</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234F6EF2'/><text x='50' y='66' font-size='40' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>W</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="appHeader">
+  <div class="brand">
+    <h1>WordRadar <span class="en">考研词汇雷达</span></h1>
+    <span class="sub" id="headerSub">艾宾浩斯调度 × 词频排序</span>
+  </div>
+  <div class="countdown">
+    <span id="streakNum">0</span>
+    <div class="cd-label">天<span>连续打卡</span></div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ========== 今日 ========== -->
+  <section id="tab-today" class="tab active">
+    <div class="queue-card card">
+      <div class="card-title">今日队列</div>
+      <div class="queue-bar"><div class="queue-fill" id="queueFill"></div></div>
+      <div class="queue-meta"><span id="queueMeta">—</span><span id="goalMeta"></span></div>
+    </div>
+
+    <div class="card flash-card" id="flashCard">
+      <div id="cardEmpty" class="empty" hidden>今日队列已完成 🎉 可在下方加学一批新词，或明天再来。</div>
+      <div id="cardBody">
+        <div class="flash-word-row">
+          <span class="flash-word" id="cardWord">word</span>
+          <button class="icon-btn" id="btnSpeak" title="朗读">🔊</button>
+        </div>
+        <div class="flash-tags"><span id="cardPhon"></span><span id="cardFreq" class="freq-tag"></span></div>
+        <div class="flash-trans" id="cardTrans">点击下方按钮显示释义</div>
+        <div class="flash-stage" id="cardStage"></div>
+        <div class="btn-row">
+          <button class="btn ghost" id="btnShow">显示释义</button>
+        </div>
+        <div class="btn-row" id="rateRow" hidden>
+          <button class="btn rate bad" data-rate="0">❌ 不认识</button>
+          <button class="btn rate mid" data-rate="1">😐 模糊</button>
+          <button class="btn rate good" data-rate="2">✅ 认识</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn ghost" id="btnMore">＋ 加学 10 个新词</button>
+      <button class="btn ghost" id="btnQuiz">📝 今日测验</button>
+    </div>
+  </section>
+
+  <!-- ========== 词库 ========== -->
+  <section id="tab-words" class="tab">
+    <div class="card filter-bar">
+      <input type="search" id="wSearch" placeholder="搜索单词…">
+      <div class="filter-row">
+        <select id="wFilter">
+          <option value="">全部状态</option>
+          <option value="new">未学</option>
+          <option value="learning">学习中</option>
+          <option value="mastered">已掌握</option>
+        </select>
+        <select id="wSort">
+          <option value="frq">按词频（常用优先）</option>
+          <option value="az">按字母</option>
+        </select>
+      </div>
+    </div>
+    <div class="hint" id="wStats"></div>
+    <div id="wordList" class="word-list"></div>
+  </section>
+
+  <!-- ========== 看板 ========== -->
+  <section id="tab-board" class="tab">
+    <div class="summary-row" id="boardStats"></div>
+    <div class="card"><div class="card-title">近 14 天学习量</div><div id="chartDaily" class="chart"></div></div>
+    <div class="card"><div class="card-title">词汇状态分布</div><div id="chartDist" class="chart"></div></div>
+  </section>
+
+  <!-- ========== 备份 ========== -->
+  <section id="tab-backup" class="tab">
+    <div class="card">
+      <div class="card-title">每日新词目标</div>
+      <div class="form-row">
+        <select id="goalSel">
+          <option value="10">10 词/天（约 1 年完成）</option>
+          <option value="15">15 词/天（约 1 年完成，预留复习）</option>
+          <option value="20">20 词/天（约 9 个月完成）</option>
+          <option value="30">30 词/天（约 6 个月完成）</option>
+        </select>
+      </div>
+      <p class="hint">按艾宾浩斯间隔 1/2/4/7/15/30 天自动安排复习，实际节奏会随你的自评浮动。</p>
+    </div>
+    <div class="card">
+      <div class="card-title">数据备份</div>
+      <p class="hint">学习进度仅存本机浏览器，不上传任何服务器。清除浏览器数据会丢失进度，建议每周导出。</p>
+      <div class="btn-row">
+        <button class="btn primary" id="btnExport">导出 JSON</button>
+        <button class="btn ghost" id="btnImportBtn">导入 JSON</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+    <div class="card">
+      <div class="card-title">关于</div>
+      <p class="hint">词库：ECDICT（MIT License，skywind3000/ECDICT），按考研标签筛选并以 COCA 词频升序排列。纯前端实现，无账号无后端。<span id="dataMeta"></span></p>
+    </div>
+    <button class="btn danger block" id="btnClear">清空学习进度</button>
+  </section>
+</main>
+
+<nav id="tabbar">
+  <button data-tab="today" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.7l-6.2 4.6 2.4-7.4L2 9.4h7.6z"/></svg>
+    今日
+  </button>
+  <button data-tab="words">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    词库
+  </button>
+  <button data-tab="board">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    看板
+  </button>
+  <button data-tab="backup">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+    备份
+  </button>
+</nav>
+
+<div id="toast" role="status"></div>
+
+<script src="data.js?v=1"></script>
+<script src="app.js"></script>
+</body>
+</html>
