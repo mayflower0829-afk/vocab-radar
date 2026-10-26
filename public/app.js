@@ -202,8 +202,9 @@ function renderWords(reset) {
     return true;
   });
   list.sort((a, b) => sort === 'az' ? a.w.localeCompare(b.w) : (a.frq || 99999) - (b.frq || 99999));
-  $('wStats').textContent = `共 ${WORDS.count} 词 · 当前显示 ${Math.min((reset ? 1 : pageIdx + 1) * PAGE, list.length)} / ${list.length}`;
-  const show = list.slice(0, (reset ? 1 : pageIdx + 1) * PAGE);
+  $('wStats').textContent = `共 ${WORDS.count} 词 · 当前显示 ${shown} / ${list.length}`;
+  const shown = Math.min((reset ? 1 : pageIdx + 1) * PAGE, list.length);
+  const show = list.slice(0, shown);
   $('wordList').innerHTML = show.map((r) => {
     const rec = state.words[r.w];
     const tag = !rec ? '' : rec.stage >= MASTER_STAGE
@@ -214,8 +215,15 @@ function renderWords(reset) {
       ${r.frq ? `<span class="w-phon" style="margin-left:auto">COCA #${r.frq}</span>` : ''}</div>
       <div class="w-trans">${esc((r.t || '').slice(0, 80))}</div>
     </div>`;
-  }).join('') || '<div class="empty">没有匹配的单词</div>';
-  $('wordList').dataset.total = list.length;
+  }).join('');
+  if (list.length > shown) {
+    const btn = document.createElement('button');
+    btn.className = 'btn ghost block';
+    btn.textContent = `加载更多（已显示 ${shown} / ${list.length}）`;
+    btn.onclick = () => { pageIdx += 1; renderWords(false); };
+    $('wordList').appendChild(btn);
+  }
+  if (!list.length) $('wordList').innerHTML = '<div class="empty">没有匹配的单词</div>';
 }
 
 // ---------- 渲染：看板 ----------
