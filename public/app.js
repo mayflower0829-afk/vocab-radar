@@ -63,21 +63,20 @@ function todayQueue() {
 
 function rate(word, rateKind) {
   const today = todayStr();
+  const isNew = !(word in state.words);   // 首次评级 = 新学，否则为复习
   const rec = state.words[word] || { stage: 0, next: today, seen: 0, ok: 0, bad: 0, last: 0 };
   const day = state.daily[today] || (state.daily[today] = { new: 0, review: 0 });
+  if (isNew) day.new += 1; else day.review += 1;
   if (rateKind === 2) {          // 认识
     rec.stage = Math.min(rec.stage + 1, MASTER_STAGE);
     rec.next = addDays(today, INTERVALS[Math.min(rec.stage - 1, INTERVALS.length - 1)]);
     rec.ok += 1;
-    day.review += 1;
   } else if (rateKind === 1) {   // 模糊
     rec.next = addDays(today, 2);
-    day.review += 1;
   } else {                        // 不认识
     rec.stage = 0;
     rec.next = today;
     rec.bad += 1;
-    day.review += 1;
   }
   rec.seen += 1;
   rec.last = Date.now();
