@@ -210,7 +210,7 @@ function renderWords(reset) {
     const tag = !rec ? '' : rec.stage >= MASTER_STAGE
       ? '<span class="w-tag" style="background:var(--good)">已掌握</span>'
       : `<span class="w-tag" style="background:var(--warn)">第${rec.stage + 1}轮</span>`;
-    return `<div class="word-item">
+    return `<div class="word-item" data-w="${esc(r.w)}">
       <div class="w-row"><span class="w-word">${esc(r.w)}</span>${r.p ? `<span class="w-phon">/${esc(r.p)}/</span>` : ''}${tag}
       ${r.frq ? `<span class="w-phon" style="margin-left:auto">COCA #${r.frq}</span>` : ''}</div>
       <div class="w-trans">${esc((r.t || '').slice(0, 80))}</div>
@@ -341,6 +341,15 @@ function init() {
     renderToday();
     toast('已加学 10 个新词');
   };
+  $('wordList').addEventListener('click', (e) => {
+    const item = e.target.closest('.word-item');
+    if (!item || e.target.closest('.btn')) return;
+    const w = item.dataset.w;
+    if (!w || !WORDS.words[WORDMAP[w]]) return;
+    session = { list: [{ w, isNew: !(w in state.words) }], idx: 0, revealed: false };
+    switchTab('today');
+    toast(`已进入「${w}」的学习卡`);
+  });
   $('wSearch').addEventListener('input', () => renderWords(true));
   $('wFilter').addEventListener('change', () => renderWords(true));
   $('wSort').addEventListener('change', () => renderWords(true));
